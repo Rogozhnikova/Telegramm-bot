@@ -1,5 +1,5 @@
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, LabeledPrice
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -7,8 +7,10 @@ from telegram.ext import (
     MessageHandler,
     filters,
     ContextTypes,
+    PreCheckoutQueryHandler,
 )
 import asyncio
+import sqlite3
 
 # Настройка логирования
 logging.basicConfig(
@@ -16,6 +18,11 @@ logging.basicConfig(
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
+
+# Токен вашего бота
+BOT_TOKEN = "8098378802:AAGFwNfTKeg73gySuQYMVRbhd0xBgyOs1yA"
+# Токен провайдера из ЮKassa
+PAYMENT_PROVIDER_TOKEN = "YOUR_PAYMENT_PROVIDER_TOKEN"
 
 # Список шагов квеста с координатами
 quest_steps = [
@@ -46,142 +53,6 @@ quest_steps = [
         "coordinates": {"latitude": 56.816177960357756, "longitude": 60.63191510363299},  # клевер парк 3
         "radius": 150,
     },
-    {
-        "description": "У нас недавно построили новую арену, оценишь?",
-        "question": "Жду твоей оценки",
-        "options": ["Классно", "Ну пойдет", "Могли сделать куда лучше"],
-        "all_correct": True,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.82536932398083, "longitude": 60.6089099514688},  # арена 4
-        "radius": 300,
-    },
-    {
-        "description": "Ты молодец, идем дальше",
-        "question": "Помнишь, как по Пьяне ты оскорбил культуру, где это было?",
-        "options": ["Аллея Культуры", "Плотинка", "Зеленая роща"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.8279239568393, "longitude": 60.606024383620074},  # аллея культуры 5
-        "radius": 200,
-    },
-    {
-        "description": "Теперь иди по набережной. Ты найдешь некую площадь. Как она называется?",
-        "question": "Нажимай на кнопку, когда будешь на месте",
-        "options": ["Площадь труда", "Парк Турбомоторного завода", "Сад центра современного искусства"],
-        "correct": 2,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.83052850713148, "longitude": 60.60522957388492},  # сад 6
-        "radius": 250,
-    },
-    {
-        "description": "Двигайся туда, где собраны множество растений, этот парк - оазис для любителей природы и уток",
-        "question": "Что за парк?",
-        "options": ["Дендропарк", "Зеленая роща", "Шувакишский лесопарк"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.8298411621838, "longitude": 60.60321206494298},  # дендропарк 7
-        "radius": 300,
-    },
-    {
-        "description": "В названии какого парка есть римские цифры X и I?",
-        "question": "Ищи Памятник ликвидаторам ядерных катастроф",
-        "options": ["Я на месте"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.83895002771718, "longitude": 60.57757973425552},  # дворец молодежи 8
-        "radius": 300,
-    },
-    {
-        "description": "Воспоминания из прошлого, что за место?",
-        "question": "Там были морские бои, многих пытался там утопить, а после наслаждался травой",
-        "options": ["Фонтан в дендропарке","Фонтан на Октябрьской площади(театр драмы)","Пруд в Харитоновском парке"],
-        "correct": 1,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.84305256141213, "longitude": 60.59566955665332},  # драма 9
-        "radius": 250,
-    },
-    {
-        "description": "Вопрос по-сложнее",
-        "question": "Где ты отдыхал в компании без лишних и А2",
-        "options": ["Около Драм театра", "Возле храма на крови", "Плотинка"],
-        "correct": 2,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.83640928155525, "longitude": 60.603043725537916},  # плотинка 10
-        "radius": 100,
-    },
-    {
-        "description": "Вспомни, где ты аплодировал Годзилле?",
-        "question": "Нажимай на кнопку, когда будешь на месте",
-        "options": ["Салют", "Гринвич", "Дом Кино"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.83830678810221, "longitude": 60.60981671700091},  # салют 11
-        "radius": 250,
-    },
-    {
-        "description": "Помнишь место, где ты познакомился с Юлей?",
-        "question": "Нажимай на кнопку, когда будешь на месте",
-        "options": ["Я на месте"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.839636118131665, "longitude": 60.609439723520865},  # работа 12
-        "radius": 150,
-    },
-    {
-        "description": "Иди туда, где тебе больше всего нравится Симпл",
-        "question": "Нажимай на кнопку, когда будешь на месте",
-        "options": ["ТЮЗ", "Филармония", "Оперный театр"],
-        "correct": 2,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.83931101728423, "longitude": 60.615465468757094},  # оперный театр 13
-        "radius": 250,
-    },
-    {
-        "description": "Следующий парк назван в честь великого ученого. Который, кстати, дружил с Карлом Марксом",
-        "question": "Как называется парк?",
-        "options": ["Парк Блюхера", "Парк Энгельса", "Парк Чкалова"],
-        "correct": 1,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.836355625113484, "longitude":  60.62604560809884},  # Энгельса 14
-        "radius": 300,
-    },
-    {
-        "description": "Взбирайся на самую высокую точку в городе и насладись потрясающим видом",
-        "question": "Там получишь следующую точку",
-        "options": ["Я на месте", "Не пойду"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.82706540885552, "longitude": 60.63350818626051},  # метеогорка 15
-        "radius": 250,
-    },
-    {
-        "description": "Следующий вопрос - цитата, тебе нужно понять, о каком месте идет речь",
-        "question": "Сан Саныча не забудь, он то тебя помнит",
-        "options": ["Я на месте", "Не пойду"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.82567542511831, "longitude": 60.62550118762154},  # галерка 16
-        "radius": 150,
-    },
-    {
-        "description": "Знаешь какую-нибудь кофейню тут с приятной атмосферой и интересными напитками?",
-        "question": "Заходить не обязательно",
-        "options": ["Я на месте", "Не пойду"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.82613205504469, "longitude": 60.62471978505706},  # Вереск 17
-        "radius": 150,
-    },
-    {
-        "description": "А как насчет заданий? Найди турники и покажи, что умеешь)",
-        "question": "Сделал?",
-        "options": ["Да", "Нет"],
-        "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.82584260801992, "longitude": 60.61945054483495},  # турники 19
-        "radius": 200,
-    },
-    # Добавьте больше шагов...
 ]
 
 # Функция для создания клавиатуры с кнопкой "Пропустить"
@@ -193,21 +64,68 @@ def create_keyboard(options):
     keyboard.append([InlineKeyboardButton("Пропустить ⏭️", callback_data="skip")])
     return InlineKeyboardMarkup(keyboard)
 
-# Приветственное сообщение
+# Сохранение статуса пользователя в базе данных
+def mark_user_as_premium(user_id):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("INSERT OR REPLACE INTO users (user_id, is_premium) VALUES (?, 1)", (user_id,))
+    conn.commit()
+    conn.close()
+
+# Проверка статуса пользователя
+def is_user_premium(user_id):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT is_premium FROM users WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else False
+
+# Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    context.user_data['step'] = 0  # Инициализация первого шага
-    await update.message.reply_text(
-        "Добро пожаловать в бот-квест! 🎉\n"
-        "Немного о квесте:\n"
-        "После ответа тебе надо предоставить свои координаты, чтобы получить следующую точку\n"
-        "Используй кнопки ниже, чтобы начать."
+    user_id = update.message.from_user.id
+    if is_user_premium(user_id):
+        await update.message.reply_text("🎉 Добро пожаловать! Вы уже имеете доступ к квесту.")
+        context.user_data['step'] = 0
+        await send_step(update, context)
+    else:
+        await update.message.reply_text(
+            "Добро пожаловать в бот-квест! 🎉\n"
+            "Чтобы получить доступ к квесту, купите премиум-доступ через /buy."
+        )
+
+# Команда /buy для старта покупки
+async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.message.chat_id
+    title = "Премиум-доступ"
+    description = "Получите доступ к квесту!"
+    payload = "Custom-Payload"
+    currency = "RUB"
+    price = 500  # Цена в рублях
+
+    await context.bot.send_invoice(
+        chat_id,
+        title,
+        description,
+        payload,
+        PAYMENT_PROVIDER_TOKEN,
+        currency,
+        [LabeledPrice("Премиум-доступ", price)]
     )
-    await asyncio.sleep(1)
-    await send_step(update, context)
+
+# Обработка предварительного запроса на платёж
+async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    query = update.pre_checkout_query
+    await query.answer(ok=True)
+
+# Обработка успешной оплаты
+async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    await update.message.reply_text("🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту.")
+    mark_user_as_premium(user_id)  # Сохраняем статус в базе данных
 
 # Отправка текущего шага
 async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await asyncio.sleep(1)
     step_index = context.user_data.get('step', 0)
     if step_index < len(quest_steps):
         step = quest_steps[step_index]
@@ -279,7 +197,7 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         )
     else:
         # Все шаги завершены
-        await query.message.reply_text("🎉 Поздравляем! Ты завершил квест! 🎉")
+        await query.message.reply_text("🎉 Поздравляем! Вы завершили квест! 🎉")
 
 # Обработка геолокации
 async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -326,12 +244,28 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 # Основная функция
 def main() -> None:
-    application = ApplicationBuilder().token("8098378802:AAGFwNfTKeg73gySuQYMVRbhd0xBgyOs1yA").build()
+    # Создание таблицы в базе данных
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            is_premium BOOLEAN DEFAULT 0
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+    # Создание приложения
+    application = ApplicationBuilder().token(BOT_TOKEN).build()
 
     # Регистрация обработчиков
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("buy", buy))
+    application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
+    application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
-    application.add_handler(MessageHandler(filters.LOCATION, handle_location))  # Обработка геолокации
+    application.add_handler(MessageHandler(filters.LOCATION, handle_location))
 
     # Запуск бота
     application.run_polling()
