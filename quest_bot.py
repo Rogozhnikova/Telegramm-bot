@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 # Токен вашего бота
 BOT_TOKEN = "8098378802:AAGfRVTtIkt5r0nNnfrxTjxt5Aeo65tTzKo"
 # Токен провайдера из ЮKassa
-PAYMENT_PROVIDER_TOKEN = "YOUR_PAYMENT_PROVIDER_TOKEN"
+PAYMENT_PROVIDER_TOKEN = "test_vcyTk6j6i-glLh9MGClBUL0ViVMBCKQTSk91uHFKoXY"
 
 # Список шагов квеста с координатами
 quest_steps = [
