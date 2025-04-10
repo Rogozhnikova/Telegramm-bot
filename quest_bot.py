@@ -168,6 +168,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             "Чтобы получить доступ к квесту, нажмите кнопку 'Купить' ниже.",
             reply_markup=create_main_keyboard()  # Отправляем клавиатуру
         )
+def create_main_keyboard():
+    keyboard = [["Купить доступ 🎟️"]]  # Кнопка "Купить доступ"
+    return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
 
 # Обработка нажатия на кнопку "Купить доступ"
 async def handle_buy_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -287,6 +290,7 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 def main() -> None:
     # Отключение webhook
     bot = Bot(token=BOT_TOKEN)
+    bot.delete_webhook()
     # Создание таблицы в базе данных
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
