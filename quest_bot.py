@@ -27,31 +27,102 @@ PAYMENT_PROVIDER_TOKEN = "381764678:TEST:119468"
 # Список шагов квеста с координатами
 quest_steps = [
     {
-        "description": "Ну что, готов погулять?\n",
-        "question": "Для кого-то паспорт просто документ, но для него - дубликат бесценного груза",
-        "options": ["парк Энгельса", "Парк Маяковского"],
-        "correct": 1,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.81725294217953, "longitude": 60.63811311028618},  # Парк Маяковского 1
-        "radius": 250,  # Радиус в метрах 
+        "description": "Привет, я очень рад, что ты решил погулять вместе со мной.",
+        "question": "Первая точка - памятник изобретателю радио. В каком году он установлен?",
+        "answer_type": "text",  # Тип ответа: текст
+        "correct_answer": "1975",  # Правильный ответ (в нижнем регистре)
     },
     {
-        "description": "Отлично) Погуляем по парку? Погода такая хорошая",
-        "question": "Иди прямо от входа, вдоль широкой аллеи, что ты увидишь?",
-        "options": ["Ларьки с едой", "Аттракционы", "Фонтан"],
-        "correct": 2,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.814653571759216, "longitude": 60.639271652060046},  # фонтан 2
-        "radius": 150,
+        "description": "Теперь в конце аллеи найди здание с двумя флагами и прочти черную табличку на нем",
+        "question": "Кто останавливался там на пути из Сибири?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "декабристы",
     },
     {
-        "description": "Теперь найди детскую площадку, рядом с ней в лес идет тропинка. Иди по ней",
-        "question": "Пришел?",
+        "description": "Развернись на 180. Снова здание, иди к нему",
+        "question": "Сколько этажей это здание?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "10",
+    },
+    {
+        "description": "Слева на соседнем здании будет рисунок",
+        "question": "Что изображено под числом 24?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "алмазные палки",
+    },
+    {
+        "description": "Иди прямо и найди граффити Мы станем лучше",
+        "question": "Какое число есть рядом с надписью на этой же стане?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "180",
+    },
+    {
+        "description": "Идем дальше по улице. По пути будет историческое здание",
+        "question": "Кто жил в этом доме?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "мамин-сибиряк",
+    },
+    {
+        "description": "Чуть дальше будят памятник Пушнику",
+        "question": "Что написано внизу?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "велению божию, о муза, будь послушна",
+    },
+    {
+        "description": "Не будем уходить далеко. Иди по улице Первомайская до улицы Царская",
+        "question": "Ты найдешь афишу. В ней есть название квартила. Напиши его",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "литературный",
+    },
+    {
+        "description": "Если стоять лицом к афише, то слева будет еще одно памятное место. Иди к нему",
+        "question": "Какая фамилия написана там?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "егоров",
+    },
+    {
+        "description": "На перекрестке направо. Дорогу не переходи и иди прямо",
+        "question": "Вывеска какого бара видна?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "янки",
+    },
+    {
+        "description": "На другой стороне дороги будет объект культорного наследия",
+        "question": "Чей дом? Только фамилию",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "селивановой",
+    },
+    {
+        "description": "Иди дальше в сторону проспекта Ленина. Видишь граффити с мистическими существами?",
+        "question": "Какого цвета то существо, которое имеет всего две ноги?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "белое",
+    },
+    {
+        "description": "Иди дальше. Ты встретишь много котиков.",
+        "question": "Они двух цветов. Но какого цвета больше?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "красный",
+    },
+    {
+        "description": "Знаешь, где находиться академия музыкальной комедии?",
+        "question": "Какого цвета кружки на дверях?",
+        "answer_type": "text",  # Тип ответа: варианты
+        "correct_answer": "желтый",
+    },
+    {
+        "description": "Квест подходит к концу и тебя ждет сложный вопрос",
+        "question": "Готов?",
+        "answer_type": "options",  # Тип ответа: варианты
         "options": ["Да", "Нет"],
         "correct": 0,
-        "location_hint": "https://maps.app.goo.gl/your_location_link",
-        "coordinates": {"latitude": 56.816177960357756, "longitude": 60.63191510363299},  # клевер парк 3
-        "radius": 150,
+    },
+    {
+        "description": "Выбирай, кофе или чебурек?",
+        "question": "",
+        "answer_type": "options",  # Тип ответа: варианты
+        "options": ["Кофе", "Чебурек"],
+        "all_correct": True,
     },
 ]
 
@@ -85,14 +156,22 @@ def is_user_premium(user_id):
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     if is_user_premium(user_id):
-        await update.message.reply_text("🎉 Добро пожаловать! Вы уже имеете доступ к квесту.")
-        context.user_data['step'] = 0  # Устанавливаем первый шаг квеста
-        await send_step(update, context)  # Отправляем первый шаг
+        await update.message.reply_text(
+            "🎉 Добро пожаловать! Вы уже имеете доступ к квесту.",
+            reply_markup=create_main_keyboard()  # Отправляем клавиатуру
+        )
+        context.user_data['step'] = 0
+        await send_step(update, context)
     else:
         await update.message.reply_text(
             "Добро пожаловать в бот-квест! 🎉\n"
-            "Чтобы получить доступ к квесту, купите премиум-доступ через /buy."
+            "Чтобы получить доступ к квесту, нажмите кнопку 'Купить' ниже.",
+            reply_markup=create_main_keyboard()  # Отправляем клавиатуру
         )
+
+# Обработка нажатия на кнопку "Купить доступ"
+async def handle_buy_button(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await buy(update, context)  # Вызываем функцию buy для отправки счета
 
 # Команда /buy для старта покупки
 async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -145,21 +224,21 @@ async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     step_index = context.user_data.get('step', 0)
     if step_index < len(quest_steps):
         step = quest_steps[step_index]
-        reply_markup = create_keyboard(step["options"])
-        
+        message = f"{step['description']}\n{step['question']}"
+
+        if step["answer_type"] == "options":
+            # Если вопрос с вариантами ответа, создаем клавиатуру
+            reply_markup = create_keyboard(step["options"])
+        else:
+            # Если вопрос с текстовым ответом, клавиатура не нужна
+            reply_markup = None
+
         # Если это callback-запрос, используем query.message для отправки сообщения
         if update.callback_query:
-            message = update.callback_query.message
-            await message.reply_text(
-                f"{step['description']}{step['question']}",
-                reply_markup=reply_markup
-            )
+            await update.callback_query.message.reply_text(message, reply_markup=reply_markup)
         else:
-            # Если это команда /start, используем update.message
-            await update.message.reply_text(
-                f"{step['description']}{step['question']}",
-                reply_markup=reply_markup
-            )
+            # Если это команда /start или другой текстовый ответ
+            await update.message.reply_text(message, reply_markup=reply_markup)
     else:
         # Если все шаги завершены
         if update.callback_query:
@@ -169,94 +248,40 @@ async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 # Обработка ответа на загадку
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    query = update.callback_query
-    await query.answer()
-
     step_index = context.user_data.get('step', 0)
-    if step_index < len(quest_steps):
-        step = quest_steps[step_index]
-        selected_option = query.data
+    if step_index >= len(quest_steps):
+        await update.message.reply_text("🎉 Поздравляем! Вы завершили квест! 🎉")
+        return
 
-        # Проверяем, была ли нажата кнопка "Пропустить"
-        if selected_option == "skip":
-            await query.message.reply_text("➡️ Точка пропущена. Переходим к следующей!")
-            context.user_data['step'] += 1  # Переходим к следующему шагу
-            await send_step(update, context)
-            return
+    step = quest_steps[step_index]
 
-        # Преобразуем выбранный вариант в число (если это не "skip")
-        selected_option = int(selected_option)
+    if step["answer_type"] == "options":
+        # Обработка ответа с вариантами
+        query = update.callback_query
+        await query.answer()
+        selected_option = int(query.data)
 
         if "all_correct" in step and step["all_correct"]:
             # Все ответы правильные
-            await query.message.reply_text("✅ Отлично! Теперь подтверди своё местоположение.")
-        else:
-            if selected_option == step["correct"]:
-                # Правильный ответ
-                await asyncio.sleep(1)
-                await query.message.reply_text("✅ Правильно! Теперь подтверди своё местоположение.")
-            else:
-                # Неправильный ответ
-                await asyncio.sleep(1)
-                await query.message.reply_text("Ты меня не проведешь, хуй на ландыш не похож 😜")
-                return  # Не переходим к следующему шагу
-
-        # Создаем клавиатуру для отправки геолокации
-        location_keyboard = ReplyKeyboardMarkup(
-            [[KeyboardButton("Подтвердить местоположение", request_location=True)]],
-            resize_keyboard=True,
-            one_time_keyboard=True
-        )
-        await query.message.reply_text(
-            "Нажми кнопку ниже, чтобы подтвердить, что ты на месте:",
-            reply_markup=location_keyboard
-        )
-    else:
-        # Все шаги завершены
-        await query.message.reply_text("🎉 Поздравляем! Вы завершили квест! 🎉")
-
-# Обработка геолокации
-async def handle_location(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_location = update.message.location
-    step_index = context.user_data.get('step', 0)
-    
-    if step_index < len(quest_steps):
-        step = quest_steps[step_index]
-        target_location = step["coordinates"]
-        radius = step["radius"]
-
-        # Вычисляем расстояние между точками (в метрах)
-        distance = calculate_distance(
-            user_location.latitude, user_location.longitude,
-            target_location["latitude"], target_location["longitude"]
-        )
-
-        if distance <= radius:
-            # Пользователь в нужной точке
-            await update.message.reply_text("✅ Вы на месте! Переходим к следующему шагу...")
+            await query.message.reply_text("✅ Все варианты правильные! Переходим к следующему шагу...")
+        elif selected_option == step["correct"]:
+            await query.message.reply_text("✅ Правильно! Переходим к следующему шагу...")
             context.user_data['step'] += 1
             await send_step(update, context)
         else:
-            # Пользователь далеко от цели
-            await update.message.reply_text(f"❌ Вы ещё не на месте. Подойди ближе! (До цели {distance:.0f} метров)")
-    else:
-        # Все шаги завершены
-        await update.message.reply_text("🎉 Поздравляю! Вы завершили квест! 🎉")
+            await query.message.reply_text("❌ Неверный ответ. Попробуйте еще раз!")
 
-# Вычисление расстояния между двумя точками (в метрах)
-def calculate_distance(lat1, lon1, lat2, lon2):
-    from math import radians, sin, cos, sqrt, atan2
+    elif step["answer_type"] == "text":
+        # Обработка текстового ответа
+        user_answer = update.message.text.strip().lower()
+        correct_answer = step["correct_answer"].lower()
 
-    # Преобразуем координаты в радианы
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-
-    # Формула гаверсинусов
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-    a = sin(dlat / 2)**2 + cos(lat1) * cos(lat2) * sin(dlon / 2)**2
-    c = 2 * atan2(sqrt(a), sqrt(1 - a))
-    distance = 6371000 * c  # Расстояние в метрах
-    return distance
+        if user_answer == correct_answer:
+            await update.message.reply_text("✅ Правильно! Переходим к следующему шагу...")
+            context.user_data['step'] += 1
+            await send_step(update, context)
+        else:
+            await update.message.reply_text("❌ Неверный ответ. Попробуйте еще раз!")
 
 # Основная функция
 def main() -> None:
@@ -284,7 +309,10 @@ def main() -> None:
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
-    application.add_handler(MessageHandler(filters.LOCATION, handle_location))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))  # Для текстовых ответов
+
+    # Новый обработчик для кнопки "Купить доступ"
+    application.add_handler(MessageHandler(filters.Regex("^Купить доступ 🎟️$"), handle_buy_button))
 
     # Запуск бота
     application.run_polling()
