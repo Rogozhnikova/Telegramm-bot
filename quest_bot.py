@@ -310,13 +310,12 @@ def main() -> None:
     # Регистрация обработчиков
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("buy", buy))
+    # Новый обработчик для кнопки "Купить доступ"
+    application.add_handler(MessageHandler(filters.Regex("^Купить доступ 🎟️$"), handle_buy_button))
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))  # Для текстовых ответов
-
-    # Новый обработчик для кнопки "Купить доступ"
-    application.add_handler(MessageHandler(filters.Regex("^Купить доступ 🎟️$"), handle_buy_button))
 
     # Запуск бота
     application.run_polling()
