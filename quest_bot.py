@@ -183,7 +183,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     description = "Получите доступ к квесту!"
     payload = "Custom-Payload"
     currency = "RUB"
-    price = 500  # Цена в рублях
+    price = 100  # Цена в рублях
 
     try:
         await context.bot.send_invoice(
@@ -265,8 +265,9 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         selected_option = int(query.data)
 
         if "all_correct" in step and step["all_correct"]:
-            # Все ответы правильные
             await query.message.reply_text("✅ Все варианты правильные! Переходим к следующему шагу...")
+            context.user_data['step'] += 1
+            await send_step(update, context)
         elif selected_option == step["correct"]:
             await query.message.reply_text("✅ Правильно! Переходим к следующему шагу...")
             context.user_data['step'] += 1
