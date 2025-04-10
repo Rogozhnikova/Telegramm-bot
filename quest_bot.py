@@ -193,7 +193,7 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             payload=payload,
             provider_token=PAYMENT_PROVIDER_TOKEN,
             currency=currency,
-            prices=[LabeledPrice("Премиум-доступ", 50000)],  # Цена в копейках
+            prices=[LabeledPrice("Премиум-доступ", 10000)],  # Цена в копейках
             start_parameter="test",  # Уникальный параметр для глубокой ссылки
             need_name=True,  # Запрашивать имя пользователя (опционально)
             need_phone_number=True,  # Запрашивать номер телефона (опционально)
