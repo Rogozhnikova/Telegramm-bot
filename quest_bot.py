@@ -1,5 +1,5 @@
 import logging
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, LabeledPrice
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup, LabeledPrice, Bot
 from telegram.ext import (
     ApplicationBuilder,
     CommandHandler,
@@ -20,9 +20,9 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Токен вашего бота
-BOT_TOKEN = "8098378802:AAGfRVTtIkt5r0nNnfrxTjxt5Aeo65tTzKo"
+BOT_TOKEN = "8098378802:AAEqgOriNJlb6wfv91FMtYI1IwAa1bIteus"
 # Токен провайдера из ЮKassa
-PAYMENT_PROVIDER_TOKEN = "test_vcyTk6j6i-glLh9MGClBUL0ViVMBCKQTSk91uHFKoXY"
+PAYMENT_PROVIDER_TOKEN = "381764678:TEST:119468"
 
 # Список шагов квеста с координатами
 quest_steps = [
@@ -86,8 +86,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     if is_user_premium(user_id):
         await update.message.reply_text("🎉 Добро пожаловать! Вы уже имеете доступ к квесту.")
-        context.user_data['step'] = 0
-        await send_step(update, context)
+        context.user_data['step'] = 0  # Устанавливаем первый шаг квеста
+        await send_step(update, context)  # Отправляем первый шаг
     else:
         await update.message.reply_text(
             "Добро пожаловать в бот-квест! 🎉\n"
@@ -103,15 +103,23 @@ async def buy(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     currency = "RUB"
     price = 500  # Цена в рублях
 
-    await context.bot.send_invoice(
-        chat_id,
-        title,
-        description,
-        payload,
-        PAYMENT_PROVIDER_TOKEN,
-        currency,
-        [LabeledPrice("Премиум-доступ", price)]
-    )
+    try:
+        await context.bot.send_invoice(
+            chat_id=chat_id,
+            title=title,
+            description=description,
+            payload=payload,
+            provider_token=PAYMENT_PROVIDER_TOKEN,
+            currency=currency,
+            prices=[LabeledPrice("Премиум-доступ", 50000)],  # Цена в копейках
+            start_parameter="test",  # Уникальный параметр для глубокой ссылки
+            need_name=True,  # Запрашивать имя пользователя (опционально)
+            need_phone_number=True,  # Запрашивать номер телефона (опционально)
+            need_email=True  # Запрашивать email (опционально)
+        )
+    except Exception as e:
+        logger.error(f"Ошибка при отправке инвойса: {e}")
+        await update.message.reply_text("Произошла ошибка при отправке платёжного запроса. Пожалуйста, попробуйте позже.")
 
 # Обработка предварительного запроса на платёж
 async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -121,8 +129,16 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 # Обработка успешной оплаты
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    await update.message.reply_text("🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту.")
     mark_user_as_premium(user_id)  # Сохраняем статус в базе данных
+
+    # Обновляем состояние пользователя
+    context.user_data['step'] = 0
+
+    # Уведомляем пользователя о покупке
+    await update.message.reply_text("🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту.")
+
+    # Автоматически отправляем первый шаг квеста
+    await send_step(update, context)
 
 # Отправка текущего шага
 async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -135,13 +151,13 @@ async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         if update.callback_query:
             message = update.callback_query.message
             await message.reply_text(
-                f"{step['description']}\n\n{step['question']}",
+                f"{step['description']}{step['question']}",
                 reply_markup=reply_markup
             )
         else:
             # Если это команда /start, используем update.message
             await update.message.reply_text(
-                f"{step['description']}\n\n{step['question']}",
+                f"{step['description']}{step['question']}",
                 reply_markup=reply_markup
             )
     else:
@@ -244,6 +260,9 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 # Основная функция
 def main() -> None:
+    # Отключение webhook
+    bot = Bot(token=BOT_TOKEN)
+    bot.delete_webhook()
     # Создание таблицы в базе данных
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
