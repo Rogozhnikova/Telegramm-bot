@@ -287,7 +287,6 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 def main() -> None:
     # Отключение webhook
     bot = Bot(token=BOT_TOKEN)
-    bot.delete_webhook()
     # Создание таблицы в базе данных
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
