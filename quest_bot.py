@@ -127,20 +127,6 @@ quest_steps = [
     },
 ]
 
-# Создание таблицы в базе данных
-def create_database():
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            user_id INTEGER PRIMARY KEY,
-            is_premium BOOLEAN DEFAULT 0,
-            premium_until TIMESTAMP  -- Дата и время окончания подписки
-        )
-    """)
-    conn.commit()
-    conn.close()
-
 # Функция для создания клавиатуры с кнопкой "Пропустить"
 def create_keyboard(options):
     keyboard = [
@@ -316,13 +302,13 @@ def main() -> None:
     # Отключение webhook
     bot = Bot(token=BOT_TOKEN)
     bot.delete_webhook()
-    # Создание таблицы в базе данных
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
-            is_premium BOOLEAN DEFAULT 0
+            is_premium BOOLEAN DEFAULT 0,
+            premium_until TIMESTAMP  -- Дата и время окончания подписки
         )
     """)
     conn.commit()
