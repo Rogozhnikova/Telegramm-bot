@@ -166,6 +166,7 @@ def is_user_premium(user_id):
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.info("Команда /start вызвана.")
     user_id = update.message.from_user.id
     if is_user_premium(user_id):
         await update.message.reply_text(
@@ -297,11 +298,16 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         else:
             await update.message.reply_text("❌ Неверный ответ. Попробуйте еще раз!")
 
+# Обработчик ошибок
+async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    logger.error("Произошла ошибка: %s", context.error)
+
 # Основная функция
 def main() -> None:
     # Отключение webhook
     bot = Bot(token=BOT_TOKEN)
     bot.delete_webhook()
+    logger.info("Webhook успешно удален.")
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
     cursor.execute("""
@@ -326,6 +332,7 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))  # Для текстовых ответов
+    application.add_error_handler(error_handler)
 
     # Запуск бота
     application.run_polling()
