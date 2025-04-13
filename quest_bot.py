@@ -10,7 +10,8 @@ from telegram.ext import (
     PreCheckoutQueryHandler,
 )
 from datetime import datetime, timedelta
-import asyncio
+from dotenv import load_dotenv
+import os
 import sqlite3
 
 # Настройка логирования
@@ -20,10 +21,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Токен вашего бота
-BOT_TOKEN = "8098378802:AAEUOo_FcneI7E_ffihiPtXuJSk3p9Qo1NE"
-# Токен провайдера из ЮKassa
-PAYMENT_PROVIDER_TOKEN = "381764678:TEST:119468"
+# Загрузка переменных окружения
+load_dotenv()
+
+BOT_TOKEN = os.getenv("BOT_TOKEN")
+PAYMENT_PROVIDER_TOKEN = os.getenv("PAYMENT_PROVIDER_TOKEN")
 
 # Список шагов квеста с координатами
 quest_steps = [
