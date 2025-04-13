@@ -308,13 +308,19 @@ def main() -> None:
     bot = Bot(token=BOT_TOKEN)
     bot.delete_webhook()
     logger.info("Webhook успешно удален.")
+     # Создание таблицы в базе данных
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
+
+    # Удаляем старую таблицу (если она существует)
+    cursor.execute("DROP TABLE IF EXISTS users")
+
+    # Создаем новую таблицу с обновленной структурой
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
             is_premium BOOLEAN DEFAULT 0,
-            premium_until TIMESTAMP  -- Дата и время окончания подписки
+            premium_until TIMESTAMP  -- Добавляем поле для времени окончания подписки
         )
     """)
     conn.commit()
