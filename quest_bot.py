@@ -35,6 +35,7 @@ quest_steps = [
         "answer_type": "text",  # Тип ответа: текст
         "correct_answer": "1975",  # Правильный ответ (в нижнем регистре)
         "hint": "Этот год находится между 1970 и 1980.",  # Подсказка
+        "hint_price": 50,  # Цена подсказки в рублях
     },
     {
         "description": "Теперь в конце аллеи найди здание с двумя флагами и прочти черную табличку на нем",
@@ -282,7 +283,20 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # Если нажата кнопка "Подсказка"
         if selected_option == "hint":
             hint = step.get("hint", "Подсказка отсутствует.")
-            await query.message.reply_text(f"💡 Подсказка: {hint}")
+            hint_price = step.get("hint_price", 0)  # Цена подсказки
+            user_id = query.from_user.id
+            balance = get_balance(user_id)
+
+            if balance >= hint_price:
+                # Списываем средства и отправляем подсказку
+                deduct_balance(user_id, hint_price)
+                await query.message.reply_text(f"💡 Подсказка: {hint}")
+            else:
+                # Недостаточно средств
+                await query.message.reply_text(
+                    f"❌ Недостаточно средств для покупки подсказки. "
+                    f"Цена подсказки: {hint_price} руб. Ваш баланс: {balance} руб."
+                )
             return
 
         # Если нажата кнопка "Пропустить"
@@ -325,6 +339,70 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.error("Произошла ошибка: %s", context.error)
 
+# Увеличение баланса пользователя
+def add_balance(user_id, amount):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET balance = balance + ? WHERE user_id = ?", (amount, user_id))
+    conn.commit()
+    conn.close()
+
+# Проверка баланса пользователя
+def get_balance(user_id):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT balance FROM users WHERE user_id = ?", (user_id,))
+    result = cursor.fetchone()
+    conn.close()
+    return result[0] if result else 0
+
+# Списание средств с баланса
+def deduct_balance(user_id, amount):
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("UPDATE users SET balance = balance - ? WHERE user_id = ?", (amount, user_id))
+    conn.commit()
+    conn.close()
+
+async def add_balance_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    chat_id = update.message.chat_id
+    try:
+        # Получаем сумму для пополнения из аргументов команды
+        amount = int(context.args[0])
+        if amount <= 0:
+            await update.message.reply_text("❌ Сумма должна быть больше 0.")
+            return
+
+        title = "Пополнение баланса"
+        description = f"Пополнение баланса на {amount} руб."
+        payload = f"balance_{amount}"
+        currency = "RUB"
+        price = amount * 100  # Цена в копейках
+
+        await context.bot.send_invoice(
+            chat_id=chat_id,
+            title=title,
+            description=description,
+            payload=payload,
+            provider_token=PAYMENT_PROVIDER_TOKEN,
+            currency=currency,
+            prices=[LabeledPrice(title, price)],
+            start_parameter="test",
+            need_name=True,
+            need_phone_number=True,
+            need_email=True
+        )
+    except (IndexError, ValueError):
+        await update.message.reply_text("❌ Используйте: /add_balance <сумма>")
+
+async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    user_id = update.message.from_user.id
+    payload = update.message.successful_payment.invoice_payload
+    if payload.startswith("balance_"):
+        amount = int(payload.split("_")[1])  # Извлекаем сумму из payload
+        add_balance(user_id, amount)
+        await update.message.reply_text(f"🎉 Баланс успешно пополнен на {amount} руб.")
+
 # Основная функция
 def main() -> None:
     # Отключение webhook
@@ -344,6 +422,7 @@ def main() -> None:
             user_id INTEGER PRIMARY KEY,
             is_premium BOOLEAN DEFAULT 0,
             premium_until TIMESTAMP  -- Добавляем поле для времени окончания подписки
+            balance INTEGER DEFAULT 0  -- Баланс пользователя
         )
     """)
     conn.commit()
@@ -357,6 +436,7 @@ def main() -> None:
     application.add_handler(CommandHandler("buy", buy))
     # Новый обработчик для кнопки "Купить доступ"
     application.add_handler(MessageHandler(filters.Regex("^Купить доступ 🎟️$"), handle_buy_button))
+    application.add_handler(CommandHandler("add_balance", add_balance_handler))
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
