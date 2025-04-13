@@ -436,11 +436,11 @@ def main() -> None:
     application.add_handler(CommandHandler("buy", buy))
     # Новый обработчик для кнопки "Купить доступ"
     application.add_handler(MessageHandler(filters.Regex("^Купить доступ 🎟️$"), handle_buy_button))
-    application.add_handler(CommandHandler("add_balance", add_balance_handler))
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))  # Для текстовых ответов
+    application.add_handler(CommandHandler("add_balance", add_balance_handler))
     application.add_error_handler(error_handler)
 
     # Запуск бота
