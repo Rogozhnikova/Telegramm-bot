@@ -34,18 +34,21 @@ quest_steps = [
         "question": "Первая точка - памятник изобретателю радио. В каком году он установлен?",
         "answer_type": "text",  # Тип ответа: текст
         "correct_answer": "1975",  # Правильный ответ (в нижнем регистре)
+        "hint": "Этот год находится между 1970 и 1980.",  # Подсказка
     },
     {
         "description": "Теперь в конце аллеи найди здание с двумя флагами и прочти черную табличку на нем",
         "question": "Кто останавливался там на пути из Сибири?",
         "answer_type": "text",  # Тип ответа: варианты
         "correct_answer": "декабристы",
+        "hint": "декабристы",  # Подсказка
     },
     {
         "description": "Развернись на 180. Снова здание, иди к нему",
         "question": "Сколько этажей это здание?",
         "answer_type": "text",  # Тип ответа: варианты
         "correct_answer": "10",
+        "hint": "здание высокое и у него есть табличка, там в первых строчках написан ответ",  # Подсказка
     },
     {
         "description": "Слева на соседнем здании будет рисунок",
@@ -136,6 +139,8 @@ def create_keyboard(options):
     ]
     # Добавляем кнопку "Пропустить"
     keyboard.append([InlineKeyboardButton("Пропустить ⏭️", callback_data="skip")])
+    # Добавляем кнопку "Подсказка"
+    keyboard.append([InlineKeyboardButton("Подсказка ❓", callback_data="hint")])
     return InlineKeyboardMarkup(keyboard)
 
 # Сохранение статуса пользователя в базе данных
@@ -271,22 +276,53 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     step = quest_steps[step_index]
 
-    if step["answer_type"] == "options":
-        # Обработка ответа с вариантами
-        query = update.callback_query
+    # Обработка callback-запросов (кнопки "Пропустить", "Подсказка" или варианты ответа)
+    query = update.callback_query
+    if query:
         await query.answer()
-        selected_option = int(query.data)
+        selected_option = query.data
 
-        if "all_correct" in step and step["all_correct"]:
-            await query.message.reply_text("✅ Все варианты правильные! Переходим к следующему шагу...")
-            context.user_data['step'] += 1
+        # Если нажата кнопка "Подсказка"
+        if selected_option == "hint":
+            hint = step.get("hint", "Подсказка отсутствует.")
+            await query.message.reply_text(f"💡 Подсказка: {hint}")
+            return
+
+        # Если нажата кнопка "Пропустить"
+        if selected_option == "skip":
+            await query.message.reply_text("➡️ Точка пропущена. Переходим к следующей!")
+            context.user_data['step'] += 1  # Переходим к следующему шагу
             await send_step(update, context)
-        elif selected_option == step["correct"]:
-            await query.message.reply_text("✅ Правильно! Переходим к следующему шагу...")
+            return
+
+        # Преобразуем выбранный вариант в число (если это не "skip" или "hint")
+        selected_option = int(selected_option)
+
+        # Проверяем ответ для вариантов
+        if step["answer_type"] == "options":
+            if "all_correct" in step and step["all_correct"]:
+                await query.message.reply_text("✅ Все варианты правильные! Переходим к следующему шагу...")
+                context.user_data['step'] += 1
+                await send_step(update, context)
+            elif selected_option == step["correct"]:
+                await query.message.reply_text("✅ Правильно! Переходим к следующему шагу...")
+                context.user_data['step'] += 1
+                await send_step(update, context)
+            else:
+                await query.message.reply_text("❌ Неверный ответ. Попробуйте еще раз!")
+            return
+
+    # Обработка текстового ответа
+    elif step["answer_type"] == "text":
+        user_answer = update.message.text.strip().lower()
+        correct_answer = step["correct_answer"].lower()
+
+        if user_answer == correct_answer:
+            await update.message.reply_text("✅ Правильно! Переходим к следующему шагу...")
             context.user_data['step'] += 1
             await send_step(update, context)
         else:
-            await query.message.reply_text("❌ Неверный ответ. Попробуйте еще раз!")
+            await update.message.reply_text("❌ Неверный ответ. Попробуйте еще раз!")
 
     elif step["answer_type"] == "text":
         # Обработка текстового ответа
