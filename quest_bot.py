@@ -13,6 +13,7 @@ from datetime import datetime, timedelta
 from dotenv import load_dotenv
 import os
 import sqlite3
+import asyncio
 
 # Настройка логирования
 logging.basicConfig(
@@ -306,10 +307,14 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
 
 # Основная функция
 def main() -> None:
-    # Отключение webhook
-    bot = Bot(token=BOT_TOKEN)
-    bot.delete_webhook()
-    logger.info("Webhook успешно удален.")
+    # Асинхронная функция для удаления webhook
+    async def delete_webhook():
+        bot = Bot(token=BOT_TOKEN)
+        await bot.delete_webhook()
+        logger.info("Webhook успешно удален.")
+
+    # Запускаем асинхронную функцию
+    asyncio.run(delete_webhook())
      # Создание таблицы в базе данных
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
