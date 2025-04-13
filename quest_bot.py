@@ -421,8 +421,8 @@ def main() -> None:
         CREATE TABLE IF NOT EXISTS users (
             user_id INTEGER PRIMARY KEY,
             is_premium BOOLEAN DEFAULT 0,
-            premium_until TIMESTAMP  -- Добавляем поле для времени окончания подписки
-            balance INTEGER DEFAULT 0  -- Баланс пользователя
+            premium_until TIMESTAMP,
+            balance INTEGER DEFAULT 0
         )
     """)
     conn.commit()
