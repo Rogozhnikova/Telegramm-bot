@@ -9,6 +9,7 @@ from telegram.ext import (
     ContextTypes,
     PreCheckoutQueryHandler,
 )
+from datetime import datetime, timedelta
 import asyncio
 import sqlite3
 
@@ -126,6 +127,20 @@ quest_steps = [
     },
 ]
 
+# Создание таблицы в базе данных
+def create_database():
+    conn = sqlite3.connect('users.db')
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            user_id INTEGER PRIMARY KEY,
+            is_premium BOOLEAN DEFAULT 0,
+            premium_until TIMESTAMP  -- Дата и время окончания подписки
+        )
+    """)
+    conn.commit()
+    conn.close()
+
 # Функция для создания клавиатуры с кнопкой "Пропустить"
 def create_keyboard(options):
     keyboard = [
@@ -136,10 +151,15 @@ def create_keyboard(options):
     return InlineKeyboardMarkup(keyboard)
 
 # Сохранение статуса пользователя в базе данных
-def mark_user_as_premium(user_id):
+def mark_user_as_premium(user_id, duration_hours=1.5):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute("INSERT OR REPLACE INTO users (user_id, is_premium) VALUES (?, 1)", (user_id,))
+    # Вычисляем дату окончания подписки
+    premium_until = datetime.now() + timedelta(hours=duration_hours)
+    cursor.execute(
+        "INSERT OR REPLACE INTO users (user_id, is_premium, premium_until) VALUES (?, 1, ?)",
+        (user_id, premium_until)
+    )
     conn.commit()
     conn.close()
 
@@ -147,25 +167,30 @@ def mark_user_as_premium(user_id):
 def is_user_premium(user_id):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
-    cursor.execute("SELECT is_premium FROM users WHERE user_id = ?", (user_id,))
+    cursor.execute("SELECT is_premium, premium_until FROM users WHERE user_id = ?", (user_id,))
     result = cursor.fetchone()
     conn.close()
-    return result[0] if result else False
+
+    if result:
+        is_premium, premium_until = result
+        if is_premium and premium_until:
+            # Проверяем, не истек ли срок подписки
+            return datetime.now() < datetime.strptime(premium_until, "%Y-%m-%d %H:%M:%S.%f")
+    return False
 
 # Команда /start
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     if is_user_premium(user_id):
         await update.message.reply_text(
-            "🎉 Добро пожаловать! Вы уже имеете доступ к квесту.",
+            "🎉 Добро пожаловать! У вас есть активный доступ к квесту.",
             reply_markup=create_main_keyboard()  # Отправляем клавиатуру
         )
         context.user_data['step'] = 0
         await send_step(update, context)
     else:
         await update.message.reply_text(
-            "Добро пожаловать в бот-квест! 🎉\n"
-            "Чтобы получить доступ к квесту, нажмите кнопку 'Купить' ниже.",
+            "😔 Ваш доступ к квесту истек. Чтобы получить доступ снова, нажмите кнопку 'Купить' ниже.",
             reply_markup=create_main_keyboard()  # Отправляем клавиатуру
         )
 def create_main_keyboard():
@@ -211,43 +236,42 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 # Обработка успешной оплаты
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    mark_user_as_premium(user_id)  # Сохраняем статус в базе данных
-
-    # Обновляем состояние пользователя
-    context.user_data['step'] = 0
-
-    # Уведомляем пользователя о покупке
-    await update.message.reply_text("🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту.")
-
+    mark_user_as_premium(user_id, duration_hours=2.5)  # Подписка на 2,5 часа
+    await update.message.reply_text(
+        "🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту на 2,5 часа."
+    )
     # Автоматически отправляем первый шаг квеста
+    context.user_data['step'] = 0
     await send_step(update, context)
+
 
 # Отправка текущего шага
 async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     step_index = context.user_data.get('step', 0)
+    user_id = update.message.from_user.id
+
+    if not is_user_premium(user_id):
+        await update.message.reply_text(
+            "😔 Ваш доступ к квесту истек. Чтобы продолжить, нажмите кнопку 'Купить' ниже.",
+            reply_markup=create_main_keyboard()
+        )
+        return
+
     if step_index < len(quest_steps):
         step = quest_steps[step_index]
         message = f"{step['description']}\n{step['question']}"
 
         if step["answer_type"] == "options":
-            # Если вопрос с вариантами ответа, создаем клавиатуру
             reply_markup = create_keyboard(step["options"])
         else:
-            # Если вопрос с текстовым ответом, клавиатура не нужна
             reply_markup = None
 
-        # Если это callback-запрос, используем query.message для отправки сообщения
         if update.callback_query:
             await update.callback_query.message.reply_text(message, reply_markup=reply_markup)
         else:
-            # Если это команда /start или другой текстовый ответ
             await update.message.reply_text(message, reply_markup=reply_markup)
     else:
-        # Если все шаги завершены
-        if update.callback_query:
-            await update.callback_query.message.reply_text("🎉 Поздравляем! Вы завершили квест! 🎉")
-        else:
-            await update.message.reply_text("🎉 Поздравляем! Вы завершили квест! 🎉")
+        await update.message.reply_text("🎉 Поздравляем! Вы завершили квест! 🎉")
 
 # Обработка ответа на загадку
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
