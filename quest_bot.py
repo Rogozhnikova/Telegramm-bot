@@ -21,7 +21,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # Токен вашего бота
-BOT_TOKEN = "8098378802:AAEqgOriNJlb6wfv91FMtYI1IwAa1bIteus"
+BOT_TOKEN = "8098378802:AAEUOo_FcneI7E_ffihiPtXuJSk3p9Qo1NE"
 # Токен провайдера из ЮKassa
 PAYMENT_PROVIDER_TOKEN = "381764678:TEST:119468"
 
@@ -225,7 +225,7 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
     user_id = update.message.from_user.id
     mark_user_as_premium(user_id, duration_hours=2.5)  # Подписка на 2,5 часа
     await update.message.reply_text(
-        "🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту на 2,5 часа."
+        "🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту на 1,5 часа."
     )
     # Автоматически отправляем первый шаг квеста
     context.user_data['step'] = 0
