@@ -151,7 +151,7 @@ def mark_user_as_premium(user_id, duration_hours=2.5):
     premium_until = datetime.now() + timedelta(hours=duration_hours)
     cursor.execute(
         "INSERT OR REPLACE INTO users (user_id, is_premium, premium_until) VALUES (?, 1, ?)",
-        (user_id, premium_until)
+        (user_id, premium_until.strftime("%Y-%m-%d %H:%M:%S.%f"))
     )
     conn.commit()
     conn.close()
@@ -166,9 +166,14 @@ def is_user_premium(user_id):
 
     if result:
         is_premium, premium_until = result
+        logger.info(f"Данные пользователя {user_id}: is_premium={is_premium}, premium_until={premium_until}")
         if is_premium and premium_until:
-            # Проверяем, не истек ли срок подписки
-            return datetime.now() < datetime.strptime(premium_until, "%Y-%m-%d %H:%M:%S.%f")
+            try:
+                premium_until_dt = datetime.strptime(premium_until, "%Y-%m-%d %H:%M:%S.%f")
+                logger.info(f"Текущее время: {datetime.now()}, Время окончания подписки: {premium_until_dt}")
+                return datetime.now() < premium_until_dt
+            except ValueError:
+                logger.error(f"Ошибка при обработке даты для пользователя {user_id}: {premium_until}")
     return False
 
 # Команда /start
@@ -230,13 +235,12 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 # Обработка успешной оплаты
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-
-    # Помечаем пользователя как премиум-пользователя
-    mark_user_as_premium(user_id, duration_hours=2.5)
-    await update.message.reply_text(
-        "🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту на 2,5 часа."
-    )
-
+    mark_user_as_premium(user_id, duration_hours=1.5)  # Подписка на 1,5 часа
+    await update.message.reply_text("🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту на 1,5 часа.")
+    # Обновляем состояние пользователя
+    context.user_data['step'] = 0
+    # Отправляем первый шаг квеста
+    await send_step(update, context)
     # Инициализируем состояние пользователя
     context.user_data['step'] = 0
 
