@@ -243,23 +243,19 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
 async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     step_index = context.user_data.get('step', 0)
     user_id = update.message.from_user.id
-
     if not is_user_premium(user_id):
         await update.message.reply_text(
             "😔 Ваш доступ к квесту истек. Чтобы продолжить, нажмите кнопку 'Купить' ниже.",
             reply_markup=create_main_keyboard()
         )
         return
-
     if step_index < len(quest_steps):
         step = quest_steps[step_index]
         message = f"{step['description']}\n{step['question']}"
-
         if step["answer_type"] == "options":
-            reply_markup = create_keyboard(step["options"])
+            reply_markup = create_keyboard(step["options"])  # Создаём клавиатуру
         else:
             reply_markup = None
-
         if update.callback_query:
             await update.callback_query.message.reply_text(message, reply_markup=reply_markup)
         else:
