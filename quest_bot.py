@@ -133,12 +133,11 @@ quest_steps = [
 ]
 
 # Функция для создания клавиатуры с кнопкой "Пропустить"
-def create_keyboard(options):
-    keyboard = [
-        [InlineKeyboardButton(option, callback_data=str(i))] for i, option in enumerate(options)
-    ]
-    # Добавляем кнопку "Пропустить"
-    keyboard.append([InlineKeyboardButton("Пропустить ⏭️", callback_data="skip")])
+def create_keyboard(options=None):
+    keyboard = []
+    if options:
+        # Если есть варианты ответов, добавляем их в клавиатуру
+        keyboard += [[InlineKeyboardButton(option, callback_data=str(i))] for i, option in enumerate(options)]
     # Добавляем кнопку "Подсказка"
     keyboard.append([InlineKeyboardButton("Подсказка ❓", callback_data="hint")])
     return InlineKeyboardMarkup(keyboard)
@@ -253,9 +252,11 @@ async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         step = quest_steps[step_index]
         message = f"{step['description']}\n{step['question']}"
         if step["answer_type"] == "options":
-            reply_markup = create_keyboard(step["options"])  # Создаём клавиатуру
+            # Если вопрос с вариантами ответа, создаем клавиатуру
+            reply_markup = create_keyboard(step["options"])
         else:
-            reply_markup = None
+            # Если вопрос с текстовым ответом, клавиатура всё равно нужна (для "Пропустить" и "Подсказка")
+            reply_markup = create_keyboard()
         if update.callback_query:
             await update.callback_query.message.reply_text(message, reply_markup=reply_markup)
         else:
@@ -292,10 +293,10 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
             return
 
         # Преобразуем выбранный вариант в число (если это не "skip" или "hint")
-        selected_option = int(selected_option)
-
-        # Проверяем ответ для вариантов
         if step["answer_type"] == "options":
+            selected_option = int(selected_option)
+
+            # Проверяем ответ для вариантов
             if "all_correct" in step and step["all_correct"]:
                 await query.message.reply_text("✅ Все варианты правильные! Переходим к следующему шагу...")
                 context.user_data['step'] += 1
@@ -310,18 +311,6 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     # Обработка текстового ответа
     elif step["answer_type"] == "text":
-        user_answer = update.message.text.strip().lower()
-        correct_answer = step["correct_answer"].lower()
-
-        if user_answer == correct_answer:
-            await update.message.reply_text("✅ Правильно! Переходим к следующему шагу...")
-            context.user_data['step'] += 1
-            await send_step(update, context)
-        else:
-            await update.message.reply_text("❌ Неверный ответ. Попробуйте еще раз!")
-
-    elif step["answer_type"] == "text":
-        # Обработка текстового ответа
         user_answer = update.message.text.strip().lower()
         correct_answer = step["correct_answer"].lower()
 
