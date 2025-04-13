@@ -144,7 +144,7 @@ def create_keyboard(options=None):
     return InlineKeyboardMarkup(keyboard)
 
 # Сохранение статуса пользователя в базе данных
-def mark_user_as_premium(user_id, duration_hours=1.5):
+def mark_user_as_premium(user_id, duration_hours=2.5):
     conn = sqlite3.connect('users.db')
     cursor = conn.cursor()
     # Вычисляем дату окончания подписки
@@ -230,14 +230,18 @@ async def precheckout_callback(update: Update, context: ContextTypes.DEFAULT_TYP
 # Обработка успешной оплаты
 async def successful_payment_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
-    mark_user_as_premium(user_id, duration_hours=2.5)  # Подписка на 2,5 часа
-    await update.message.reply_text(
-        "🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту на 1,5 часа."
-    )
-    # Автоматически отправляем первый шаг квеста
-    context.user_data['step'] = 0
-    await send_step(update, context)
 
+    # Помечаем пользователя как премиум-пользователя
+    mark_user_as_premium(user_id, duration_hours=2.5)
+    await update.message.reply_text(
+        "🎉 Спасибо за покупку! Теперь у вас есть доступ к квесту на 2,5 часа."
+    )
+
+    # Инициализируем состояние пользователя
+    context.user_data['step'] = 0
+
+    # Отправляем первый шаг квеста
+    await send_step(update, context)
 
 # Отправка текущего шага
 async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
