@@ -328,14 +328,12 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     logger.error("Произошла ошибка: %s", context.error)
 
-async def reset(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    user_id = update.message.from_user.id
-    conn = sqlite3.connect('users.db')
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM users WHERE user_id = ?", (user_id,))
-    conn.commit()
-    conn.close()
-    await update.message.reply_text("✅ Состояние пользователя сброшено. Теперь вы новый пользователь.")
+async def welcome(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    await update.message.reply_text(
+        "🎉 Добро пожаловать! У вас есть активный доступ к квесту.\n"
+        "Его нужно купить по кнопке ниже",
+        reply_markup=create_main_keyboard()
+    )
 
 # Основная функция
 def main() -> None:
@@ -374,7 +372,7 @@ def main() -> None:
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_response))  # Для текстовых ответов
-    application.add_handler(CommandHandler("reset", reset))
+    application.add_handler(CommandHandler("welcome", welcome))
     application.add_error_handler(error_handler)
 
     # Запуск бота
