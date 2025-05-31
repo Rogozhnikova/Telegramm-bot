@@ -40,7 +40,7 @@ quest_steps = [
         "description": "Теперь в конце аллеи найди здание с двумя флагами и прочти черную табличку на нем.",
         "question": "Кто останавливался там на пути из Сибири?",
         "answer_type": "text",  # Тип ответа: варианты
-        "correct_answer": "декабрь",
+        "correct_answer": "декабристы",
     },
     {
         "description": "Развернись на 180 градусов. Справа есть здание — иди к нему.",
@@ -53,7 +53,8 @@ quest_steps = [
         "description": "Слева на соседнем здании будет рисунок",
         "question": "Что изображено под числом 24?",
         "answer_type": "text",  # Тип ответа: варианты
-        "correct_answer": "какие-то палки",
+        "correct_answer": "алмазные палки",
+        "hint": "какие-то палки"
     },
     {
         "description": "Иди прямо и найди граффити 'Мы станем лучше'",
@@ -67,17 +68,18 @@ quest_steps = [
         "question": "Кто жил в этом доме?",
         "answer_type": "text",  # Тип ответа: варианты
         "correct_answer": "мамин-сибиряк",
+        "hint": "улица Пушкина, 27",  # Подсказка
     },
     {
         "description": "Чуть дальше будет памятник Пушкину",
         "question": "Что написано внизу?",
         "answer_type": "text",  # Тип ответа: варианты
         "correct_answer": "веленью божию, о муза, будь послушна...",
-        "hint": "это строчка из его стихотворения, обрати внимание на пробелы и запятые",  # Подсказка
+        "hint": "это строчка из его стихотворения, обрати внимание на пробелы, запятые и точки",  # Подсказка
     },
     {
         "description": "Не будем уходить далеко. Иди по улице Первомайская до улицы Царская",
-        "question": "Ты найдешь афишу. В ней есть название квартила. Напиши его",
+        "question": "Ты найдешь афишу. В ней есть название квартала. Напиши его",
         "answer_type": "text",  # Тип ответа: варианты
         "correct_answer": "литературный",
     },
@@ -120,21 +122,6 @@ quest_steps = [
         "answer_type": "text",  # Тип ответа: варианты
         "correct_answer": "желтого",
     },
-    {
-        "description": "Ура!\n"
-        "Финальный и самый сложный вопрос",
-        "question": "Готов?",
-        "answer_type": "options",  # Тип ответа: варианты
-        "options": ["Да", "Нет"],
-        "correct": 0,
-    },
-    {
-        "description": "Выбирай, кофе или чебурек?",
-        "question": "",
-        "answer_type": "options",  # Тип ответа: варианты
-        "options": ["Кофе", "Чебурек"],
-        "all_correct": True,
-    },
 ]
 
 # Функция для создания клавиатуры с кнопкой "Пропустить"
@@ -170,14 +157,9 @@ def is_user_premium(user_id):
 
     if result:
         is_premium, premium_until = result
-        logger.info(f"Данные пользователя {user_id}: is_premium={is_premium}, premium_until={premium_until}")
         if is_premium and premium_until:
-            try:
-                premium_until_dt = datetime.strptime(premium_until, "%Y-%m-%d %H:%M:%S.%f")
-                logger.info(f"Текущее время: {datetime.now()}, Время окончания подписки: {premium_until_dt}")
-                return datetime.now() < premium_until_dt
-            except ValueError:
-                logger.error(f"Ошибка при обработке даты для пользователя {user_id}: {premium_until}")
+            # Проверяем, не истек ли срок подписки
+            return datetime.now() < datetime.strptime(premium_until, "%Y-%m-%d %H:%M:%S.%f")
     return False
 
 # Команда /start
@@ -202,7 +184,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
             reply_markup=create_main_keyboard()  # Отправляем клавиатуру
         )
 def create_main_keyboard():
-    keyboard = [["🔒Активировать доступ? 🔒"]]  # Кнопка "Купить доступ"
+    keyboard = [["Активировать доступ?"]]  # Кнопка "Купить доступ"
     return ReplyKeyboardMarkup(keyboard, resize_keyboard=True, one_time_keyboard=False)
 
 # Обработка нажатия на кнопку "Купить доступ"
@@ -252,11 +234,6 @@ async def successful_payment_callback(update: Update, context: ContextTypes.DEFA
     context.user_data['step'] = 0
     # Отправляем первый шаг квеста
     await send_step(update, context)
-    # Инициализируем состояние пользователя
-    context.user_data['step'] = 0
-
-    # Отправляем первый шаг квеста
-    await send_step(update, context)
 
 # Отправка текущего шага
 async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -264,7 +241,7 @@ async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     if not is_user_premium(user_id):
         await update.message.reply_text(
-            "😔 Ваш доступ к квесту истек. Чтобы продолжить, нажмите кнопку '🔒Активировать доступ? 🔒' ниже.",
+            "😔 Ваш доступ к квесту истек. Чтобы продолжить, нажмите кнопку 'Активировать доступ?' ниже.",
             reply_markup=create_main_keyboard()
         )
         return
@@ -282,13 +259,15 @@ async def send_step(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         else:
             await update.message.reply_text(message, reply_markup=reply_markup)
     else:
-        await update.message.reply_text("🎉 Поздравляем! Вы успешно завершили квест и раскрыли все его тайны. Надеемся, вам понравилось это приключение! 🎉")
+        await update.message.reply_text("🎉 Поздравляем! Вы успешно завершили квест и раскрыли все его тайны. Надеемся, вам понравилось это приключение! 🎉\n"
+                                        "Награду вы можете выбрать сами кофе в Жизньмарт или чебурек в ЧебурекМи, которые находятся рядом - на Карла Либкнехта 22/1")
 
 # Обработка ответа на загадку
 async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     step_index = context.user_data.get('step', 0)
-    if step_index >= len(quest_steps):
-        await update.message.reply_text("🎉 Поздравляем! Вы успешно завершили квест и раскрыли все его тайны. Надеемся, вам понравилось это приключение! 🎉")
+    if step_index == len(quest_steps):
+        await update.message.reply_text("🎉 Поздравляем! Вы успешно завершили квест и раскрыли все его тайны. Надеемся, вам понравилось это приключение! 🎉\n"
+                                        "Награду вы можете выбрать сами кофе в Жизньмарт или чебурек в ЧебурекМи, которые находятся рядом - на Карла Либкнехта 22/1")
         return
 
     step = quest_steps[step_index]
@@ -308,6 +287,8 @@ async def handle_response(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         # Преобразуем выбранный вариант в число (если это не "skip" или "hint")
         if step["answer_type"] == "options":
             selected_option = int(selected_option)
+            context.user_data['step'] += 1
+            await send_step(update, context)
 
             # Проверяем ответ для вариантов
             if "all_correct" in step and step["all_correct"]:
@@ -381,7 +362,7 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("buy", buy))
     # Новый обработчик для кнопки "Купить доступ"
-    application.add_handler(MessageHandler(filters.Regex("🔒Активировать доступ? 🔒"), handle_buy_button))
+    application.add_handler(MessageHandler(filters.Regex("Активировать доступ?"), handle_buy_button))
     application.add_handler(PreCheckoutQueryHandler(precheckout_callback))
     application.add_handler(MessageHandler(filters.SUCCESSFUL_PAYMENT, successful_payment_callback))
     application.add_handler(CallbackQueryHandler(handle_response))
